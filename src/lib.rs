@@ -91,7 +91,7 @@ pub fn start_log(prog: &str) -> Option<bool> {
     return Some(true);
 }
 
-pub fn append_log(prog: &str, data: &str) {
+pub fn append_log(prog: &str, data: &str) -> Option<bool> {
     // Makign data
     let mut log_msg: String = String::new();
     log_msg.push_str(data);
@@ -113,8 +113,11 @@ pub fn append_log(prog: &str, data: &str) {
 
     // Hendeling errs
     if let Err(_e) = writeln!(log_file, "{}", log_msg) {
-        eprintln!("Couldn't open already existing log file")
-    }
+        eprintln!("Couldn't open already existing log file");
+        return Some(false);
+    }; 
+
+    return Some(true);
 }
 
 #[cfg(test)]
@@ -124,6 +127,13 @@ mod tests {
     #[test]
     fn logger() {
         let result = start_log("TEST").unwrap();
+        assert_eq!(result, true);
+    }
+
+    #[test]
+    fn append() {
+        start_log("TEST").unwrap();
+        let result = append_log("TEST", "data").unwrap();
         assert_eq!(result, true);
     }
 }
