@@ -1,6 +1,6 @@
 use chrono::{DateTime, Datelike, Local, Timelike};
 use std::{fs::OpenOptions, io::Write, str};
-use system::{deldir, ispath, makedir};
+use system::{del_dir, is_path, make_dir};
 
 const LOG_DIRECTORY: &str = "/tmp/logger/";
 
@@ -59,14 +59,14 @@ pub fn start_log(prog: &str) -> Option<bool> {
     log_path.push_str(LOG_DIRECTORY);
     log_path.push_str(prog);
 
-    if !ispath(&log_path) {
-        if !makedir(&log_path).unwrap() {
+    if !is_path(&log_path) {
+        if !make_dir(&log_path).unwrap() {
             return Some(false);
         }
         // keeps going if the path is made
     } else {
-        deldir(&log_path);
-        if !makedir(&log_path).unwrap() {
+        del_dir(&log_path);
+        if !make_dir(&log_path).unwrap() {
             return Some(false);
         }
     }
