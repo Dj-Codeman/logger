@@ -6,7 +6,6 @@ const LOG_DIRECTORY: &str = "/tmp/logger/";
 
 fn timestamp() -> String {
     // Getting the data
-    let mut timestamp: String = String::new();
     let current_time: DateTime<Local> = Local::now();
 
     let day: u32 = current_time.day();
@@ -31,44 +30,21 @@ fn timestamp() -> String {
         }
     }
 
-    timestamp.push_str(&year_string);
-    timestamp.push_str("-");
-    timestamp.push_str(&padding_date(month));
-    timestamp.push_str("-");
-    timestamp.push_str(&padding_date(day));
-    timestamp.push_str("_");
-    timestamp.push_str(&padding_date(hour));
-    timestamp.push_str(":");
-    timestamp.push_str(&padding_date(minute));
-    timestamp.push_str(".");
-    timestamp.push_str(&padding_date(second));
 
-    return timestamp;
+    return format!("{}-{}-{}-{}:{}.{}", year_string, month, day, hour, minute, second);
 }
 
 /// Creats a log directory and a file called general.log in the directory
 pub fn start_log(prog: &str) -> Option<bool> {
-    let mut log_msg: String = String::new();
-    log_msg.push_str(" LOG START");
-    log_msg.push_str(" @ ");
-    log_msg.push_str(&timestamp());
-    log_msg.push_str("\n");
+    let log_msg: String = format!("LOG STARTED @{} \n", timestamp());
 
     // make the path
-    let mut log_path: String = String::new();
-    log_path.push_str(LOG_DIRECTORY);
-    log_path.push_str(prog);
+    let log_path = format!("{}{}", LOG_DIRECTORY, prog);
 
-    if !is_path(&log_path) {
-        if !make_dir(&log_path).unwrap() {
-            return Some(false);
-        }
-        // keeps going if the path is made
-    } else {
-        del_dir(&log_path);
-        if !make_dir(&log_path).unwrap() {
-            return Some(false);
-        }
+
+    del_dir(&log_path);
+    if !make_dir(&log_path).unwrap() {
+        return Some(false);
     }
 
     // checks if the path exists using the ispath function.
@@ -93,17 +69,11 @@ pub fn start_log(prog: &str) -> Option<bool> {
 
 pub fn append_log(prog: &str, data: &str) -> Option<bool> {
     // Makign data
-    let mut log_msg: String = String::new();
-    log_msg.push_str(data);
-    log_msg.push_str(" @ ");
-    log_msg.push_str(&timestamp());
-    log_msg.push_str("\n");
+    let log_msg: String = format!("{} @{} \n", data, timestamp());
 
     // Opening the file
-    let mut log_file: String = String::new();
-    log_file.push_str(LOG_DIRECTORY);
-    log_file.push_str(prog);
-    log_file.push_str("/general.log");
+
+    let log_file: String = format!("{}{}/general.log", LOG_DIRECTORY, prog);
 
     let mut log_file = OpenOptions::new()
         .write(true)
