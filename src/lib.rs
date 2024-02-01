@@ -46,6 +46,10 @@ fn timestamp() -> String {
 
 /// Creats a log directory and a file called general.log in the directory
 pub fn start_log(prog: &str) -> Result<(), MyErrors> {
+    if prog == String::from("undefined") {
+        return Err(MyErrors::LoggerError(LoggerError::new(errors::LoggerErrorType::InvalidProgName)));
+    };
+
     let log_msg: String = format!("LOG STARTED @{} \n", timestamp());
 
     // make the path
