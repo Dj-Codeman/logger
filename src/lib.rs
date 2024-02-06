@@ -94,8 +94,15 @@ pub fn start_log(prog: &str) -> Result<(), MyErrors> {
 
 pub fn append_log(prog: &str, data: &str) -> Result<(), MyErrors> {
     // This function takes a str and program names wraps the data in a timestamp them write it to the appropriate file
+    
     let log_msg: String = format!("{} @{} \n", data, timestamp());
-    let log_file: String = format!("{}{}/general.log", LOG_DIRECTORY, prog);
+    let log_path = format!("{}{}", LOG_DIRECTORY, prog);
+    let log_file: String = format!("{}/general.log", log_path);
+
+    match remake_dir(&log_path) {
+        Ok(_) => (), // TODO figure out a more compact way to handel this
+        Err(e) => return Err(MyErrors::SystemError(e)),
+    }
 
     let mut log_file: std::fs::File = match is_path(&log_file) {
         true => match OpenOptions::new().write(true).append(true).open(log_file) {
