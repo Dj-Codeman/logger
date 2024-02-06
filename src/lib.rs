@@ -127,7 +127,7 @@ mod tests {
 
     #[test]
     fn logger() {
-        let _ = start_log("TEST").unwrap();
+        let _ = append_log("TEST", "Data").unwrap();
         assert_eq!(is_path("/tmp/logger/TEST"), true);
     }
 }
