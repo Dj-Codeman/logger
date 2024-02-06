@@ -3,7 +3,7 @@ pub mod errors;
 use chrono::{DateTime, Datelike, Local, Timelike};
 use errors::{LoggerError, MyErrors};
 use std::{fs::OpenOptions, io::Write, str};
-use system::{errors::SystemError, remake_dir};
+use system::{errors::SystemError, is_path, remake_dir};
 
 const LOG_DIRECTORY: &str = "/tmp/logger/";
 
@@ -97,8 +97,8 @@ pub fn append_log(prog: &str, data: &str) -> Result<(), MyErrors> {
     let log_msg: String = format!("{} @{} \n", data, timestamp());
     let log_file: String = format!("{}{}/general.log", LOG_DIRECTORY, prog);
 
-    let mut log_file: std::fs::File =
-        match OpenOptions::new().write(true).append(true).open(log_file) {
+    let mut log_file: std::fs::File = match is_path(&log_file) {
+        true => match OpenOptions::new().write(true).append(true).open(log_file) {
             Ok(d) => d,
             Err(e) => {
                 return Err(MyErrors::SystemError(SystemError::new_details(
@@ -106,7 +106,17 @@ pub fn append_log(prog: &str, data: &str) -> Result<(), MyErrors> {
                     &e.to_string(),
                 )))
             }
-        };
+        },
+        false => match OpenOptions::new().create_new(true).write(true).append(true).open(log_file) {
+            Ok(d) => d,
+            Err(e) => {
+                return Err(MyErrors::SystemError(SystemError::new_details(
+                    system::errors::SystemErrorType::ErrorOpeningFile,
+                    &e.to_string(),
+                )))
+            }
+        }
+    };
 
     // TODO USE THE SYSTEM LIB MORE HEAVY add append to file function to standardize behavior
     match writeln!(log_file, "{}", log_msg) {
