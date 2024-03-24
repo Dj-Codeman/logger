@@ -1,7 +1,4 @@
-pub mod errors;
-
 use chrono::{DateTime, Datelike, Local, Timelike};
-use errors::{LoggerError, MyErrors};
 use std::{fs::OpenOptions, io::Write, str};
 use system::{del_dir, is_path, make_dir};
 
@@ -38,57 +35,39 @@ fn timestamp() -> String {
 }
 
 /// Creats a log directory and a file called general.log in the directory
-#[deprecated(since="0.1.0", note="Currently use `append_log()` with a valid progname, it will handel creating and managing log files")]
-pub fn start_log(prog: &str) -> Result<(), MyErrors> {
-    if prog == String::from("undefined") {
-        return Err(MyErrors::LoggerError(LoggerError::new(errors::LoggerErrorType::InvalidProgName)));
-    };
-
+pub fn start_log(prog: &str) -> Option<bool> {
     let log_msg: String = format!("LOG STARTED @{} \n", timestamp());
 
     // make the path
     let log_path = format!("{}{}", LOG_DIRECTORY, prog);
-
 
     del_dir(&log_path);
     if !make_dir(&log_path).unwrap() {
         return Some(false);
     }
 
+    // checks if the path exists using the ispath function.
     let mut log_file: String = String::new();
-    log_file.push_str(&log_path.as_os_str().to_string_lossy());
+    log_file.push_str(&log_path);
     log_file.push_str("/general.log");
 
-    let mut log_file = match OpenOptions::new()
+    let mut log_file = OpenOptions::new()
         .create_new(true)
         .write(true)
         .append(true)
         .open(log_file)
-    {
-        Ok(d) => d,
-        Err(e) => {
-            let data: String = e.to_string();
-            return Err(MyErrors::LoggerError(LoggerError::new_details(
-                errors::LoggerErrorType::ErrorCreatingLog,
-                &data,
-            )));
-        }
-    };
+        .expect("File could not be opened");
 
-    match writeln!(log_file, "{}", log_msg) {
-        Ok(_) => return Ok(()),
-        Err(e) => {
-            return Err(MyErrors::SystemError(SystemError::new_details(
-                system::errors::SystemErrorType::ErrorOpeningFile,
-                &e.to_string(),
-            )))
-        }
-    };
+    if let Err(_e) = writeln!(log_file, "{}", log_msg) {
+        eprintln!("Could not create or write to new log file");
+        return Some(false);
+    }
+
+    return Some(true);
 }
 
-pub fn append_log(prog: &str, data: &str) -> Result<(), MyErrors> {
-    // This function takes a str and program names wraps the data in a timestamp them write it to the appropriate file
-    
+pub fn append_log(prog: &str, data: &str) -> Option<bool> {
+    // Makign data
     let log_msg: String = format!("{} @{} \n", data, timestamp());
 
     // Opening the file
@@ -101,26 +80,29 @@ pub fn append_log(prog: &str, data: &str) -> Result<(), MyErrors> {
         .open(log_file)
         .expect("File could not be opened");
 
-    // TODO USE THE SYSTEM LIB MORE HEAVY add append to file function to standardize behavior
-    match writeln!(log_file, "{}", log_msg) {
-        Ok(_) => return Ok(()),
-        Err(e) => {
-            return Err(MyErrors::SystemError(SystemError::new_details(
-                system::errors::SystemErrorType::ErrorOpeningFile,
-                &e.to_string(),
-            )))
-        }
-    };
+    // Hendeling errs
+    if let Err(_e) = writeln!(log_file, "{}", log_msg) {
+        eprintln!("Couldn't open already existing log file");
+        return Some(false);
+    }; 
+
+    return Some(true);
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use system::is_path;
 
     #[test]
     fn logger() {
-        let _ = append_log("TEST", "Data").unwrap();
-        assert_eq!(is_path("/tmp/logger/TEST"), true);
+        let result = start_log("TEST").unwrap();
+        assert_eq!(result, true);
+    }
+
+    #[test]
+    fn append() {
+        start_log("TEST").unwrap();
+        let result = append_log("TEST", "data").unwrap();
+        assert_eq!(result, true);
     }
 }
