@@ -3,7 +3,7 @@ pub mod errors;
 use chrono::{DateTime, Datelike, Local, Timelike};
 use errors::{LoggerError, MyErrors};
 use std::{fs::OpenOptions, io::Write, str};
-use system::{del_dir, is_path, make_dir};
+use system::{make_dir, remake_dir, ClonePath, PathType, SystemError};
 
 const LOG_DIRECTORY: &str = "/tmp/logger/";
 
@@ -21,7 +21,7 @@ fn timestamp() -> String {
     // adding foward 0 padding to dates
     let year_string: String = year.to_string();
 
-    fn padding_date(number: u32) -> String {
+    fn _padding_date(number: u32) -> String {
         if number < 10 {
             let mut local_date_string = String::new();
             local_date_string.push_str("0");
@@ -47,12 +47,12 @@ pub fn start_log(prog: &str) -> Result<(), MyErrors> {
     let log_msg: String = format!("LOG STARTED @{} \n", timestamp());
 
     // make the path
-    let log_path = format!("{}{}", LOG_DIRECTORY, prog);
+    let log_path: PathType =  PathType::Content(format!("{}{}", LOG_DIRECTORY, prog));
 
 
-    del_dir(&log_path);
-    if !make_dir(&log_path).unwrap() {
-        return Some(false);
+    match remake_dir(log_path.clone_path()) {
+        Ok(_) => (),
+        Err(e) => return Err(MyErrors::SystemError(e)),
     }
 
     let mut log_file: String = String::new();
@@ -92,12 +92,15 @@ pub fn append_log(prog: &str, data: &str) -> Result<(), MyErrors> {
     let log_msg: String = format!("{} @{} \n", data, timestamp());
 
     // Opening the file
+    let log_dir: PathType = PathType::Content(format!("{}{}", LOG_DIRECTORY, prog));
+    let log_file: PathType = PathType::Content(format!("{}/general.log", log_dir.to_string()));
 
-    let log_file: String = format!("{}{}/general.log", LOG_DIRECTORY, prog);
+    let _ = make_dir(log_dir);
 
     let mut log_file = OpenOptions::new()
         .write(true)
         .append(true)
+        .create(true)
         .open(log_file)
         .expect("File could not be opened");
 
@@ -116,11 +119,14 @@ pub fn append_log(prog: &str, data: &str) -> Result<(), MyErrors> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use system::is_path;
+    use system::{del_dir, path_present};
 
     #[test]
     fn logger() {
-        let _ = append_log("TEST", "Data").unwrap();
-        assert_eq!(is_path("/tmp/logger/TEST"), true);
+        let path: PathType = PathType::Str("/tmp/logger/TEST".into());
+        append_log("TEST", "Data").unwrap();
+        assert_eq!(path_present(&path).unwrap(), true);
+        // Cleaning up dir
+        let _ = del_dir(&path);
     }
 }
