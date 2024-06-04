@@ -95,6 +95,7 @@ pub fn start_log(prog: &str, mut errors: ErrorArray) -> uf<()> {
 
 pub fn append_log(prog: &str, data: &str, mut errors: ErrorArray) -> uf<()> {
     // This function takes a str and program names wraps the data in a timestamp them write it to the appropriate file
+    
 
     let log_msg: String = format!("{} @{} \n", data, timestamp());
 
@@ -102,17 +103,8 @@ pub fn append_log(prog: &str, data: &str, mut errors: ErrorArray) -> uf<()> {
     let log_dir: PathType = PathType::Content(format!("{}{}", LOG_DIRECTORY, prog));
     let log_file: PathType = PathType::Content(format!("{}/general.log", log_dir.to_string()));
 
-    match make_dir(&log_dir, errors.clone()).uf_unwrap() {
-        Ok(b) => match b {
-            true => (),
-            false => {
-                errors.push(ErrorArrayItem::new(
-                    system::errors::Errors::CreatingDirectory,
-                    "Couldn't create log dir".to_string(),
-                ));
-                return uf::new(Err(errors));
-            }
-        },
+    match remake_dir(&log_dir, errors.clone()).uf_unwrap() {
+        Ok(_) => (),
         Err(e) => {
             println!("file err");
             return uf::new(Err(e))}
