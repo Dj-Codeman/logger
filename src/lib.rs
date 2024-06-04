@@ -113,18 +113,25 @@ pub fn append_log(prog: &str, data: &str, mut errors: ErrorArray) -> uf<()> {
                 return uf::new(Err(errors));
             }
         },
-        Err(e) => return uf::new(Err(e)),
+        Err(e) => {
+            println!("file err");
+            return uf::new(Err(e))}
+            ,
     }
 
     let mut log_file = match open_file(log_file, errors.clone()).uf_unwrap() {
         Ok(d) => d,
-        Err(e) => return uf::new(Err(e)),
+        Err(e) => {
+            println!("file err");
+            return uf::new(Err(e))
+        }
     };
 
     // TODO USE THE SYSTEM LIB MORE HEAVY add append to file function to standardize behavior
     match writeln!(log_file, "{}", log_msg) {
         Ok(_) => return uf::new(Ok(())),
         Err(e) => {
+            println!("file err");
             errors.push(ErrorArrayItem::from(e));
             return uf::new(Err(errors));
         }
