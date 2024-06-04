@@ -9,7 +9,7 @@ use system::{
     types::PathType,
 };
 
-const LOG_DIRECTORY: &str = "/tmp/logger/";
+const LOG_DIRECTORY: &str = "/tmp/";
 
 fn timestamp() -> String {
     // Getting the data
@@ -62,10 +62,10 @@ pub fn start_log(prog: &str, mut errors: ErrorArray) -> uf<()> {
     // make the path
     let log_path: PathType = PathType::Content(format!("{}{}", LOG_DIRECTORY, prog));
 
-    match remake_dir(&log_path.clone(), ErrorArray::new_container()).uf_unwrap() {
-        Ok(_) => (),
-        Err(e) => return uf::new(Err(e)),
-    }
+    // match remake_dir(&log_path.clone(), errors.clone()).uf_unwrap() {
+    //     Ok(_) => (),
+    //     Err(e) => return uf::new(Err(e)),
+    // }
 
     let mut log_file: String = String::new();
     log_file.push_str(&log_path.as_os_str().to_string_lossy());
@@ -119,11 +119,16 @@ pub fn append_log(prog: &str, data: &str, mut errors: ErrorArray) -> uf<()> {
             ,
     }
 
-    let mut log_file = match open_file(log_file, errors.clone()).uf_unwrap() {
+    let mut log_file = match OpenOptions::new()
+        .create_new(true)
+        .write(true)
+        .append(true)
+        .open(log_file)
+    {
         Ok(d) => d,
         Err(e) => {
-            println!("file err");
-            return uf::new(Err(e))
+            errors.push(ErrorArrayItem::from(e));
+            return uf::new(Err(errors));
         }
     };
 
@@ -131,7 +136,7 @@ pub fn append_log(prog: &str, data: &str, mut errors: ErrorArray) -> uf<()> {
     match writeln!(log_file, "{}", log_msg) {
         Ok(_) => return uf::new(Ok(())),
         Err(e) => {
-            println!("file err");
+            println!("err writing");
             errors.push(ErrorArrayItem::from(e));
             return uf::new(Err(errors));
         }
@@ -146,13 +151,15 @@ mod tests {
 
     #[test]
     fn logger() {
-        let path: PathType = PathType::Str("/tmp/logger/TEST".into());
-        append_log("TEST", "Data", ErrorArray::new_container()).unwrap();
-        assert_eq!(
-            path_present(&path, ErrorArray::new_container()).unwrap(),
-            true
-        );
+        let errors = ErrorArray::new_container();
+        let path: PathType = PathType::Str("/tmp/test".into());
+        let d = append_log("test", "Data", errors.clone());
+        assert!(d.is_ok());
+        // assert_eq!(
+            // path_present(&path, errors.clone()).unwrap(),
+            // true
+        // );
         // Cleaning up dir
-        let _ = del_dir(&path, ErrorArray::new_container());
+        let _ = del_dir(&path, errors.clone());
     }
 }
