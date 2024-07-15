@@ -1,7 +1,8 @@
 use chrono::{DateTime, Datelike, Local, Timelike};
+use dusa_collection_utils::errors::Errors;
 use std::{fs::OpenOptions, io::Write, str};
-#[allow(unused_imports)]
-use system::{
+#[allow(unused_imports, deprecated)]
+use dusa_collection_utils::{
     errors::{ErrorArray, ErrorArrayItem, UnifiedResult as uf},
     functions::{make_dir, open_file, remake_dir},
     types::PathType,
@@ -49,7 +50,7 @@ fn timestamp() -> String {
 pub fn start_log(prog: &str, mut errors: ErrorArray) -> uf<()> {
     if prog == String::from("undefined") {
         errors.push(ErrorArrayItem::new(
-            system::errors::Errors::GeneralError,
+            Errors::GeneralError,
             String::from("Program name was invalid"),
         ));
         return uf::new(Err(errors));
@@ -135,7 +136,7 @@ pub fn append_log(prog: &str, data: &str, mut errors: ErrorArray) -> uf<()> {
 
 #[cfg(test)]
 mod tests {
-    use system::functions::del_dir;
+    use dusa_collection_utils::functions::del_dir;
 
     use super::*;
 
