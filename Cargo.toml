@@ -2,6 +2,10 @@
 name = "logging"
 version = "1.0.0"
 edition = "2021"
+authors = ["Darrion Whitfield <dwhitfield@ramfield.net>"]
+descriptions = "A really simple application to write files to a log in the /tmp dir"
+homepage = "https://docs.artisanhosting.net"
+license = "MIT OR Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

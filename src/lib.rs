@@ -1,8 +1,6 @@
-#[deprecated(since = "0.2.1", note = "please use `unifiederrors` instead")]
-pub mod errors;
-
 use chrono::{DateTime, Datelike, Local, Timelike};
 use std::{fs::OpenOptions, io::Write, str};
+#[allow(unused_imports)]
 use system::{
     errors::{ErrorArray, ErrorArrayItem, UnifiedResult as uf},
     functions::{make_dir, open_file, remake_dir},
@@ -137,7 +135,7 @@ pub fn append_log(prog: &str, data: &str, mut errors: ErrorArray) -> uf<()> {
 
 #[cfg(test)]
 mod tests {
-    use system::functions::{del_dir, path_present};
+    use system::functions::del_dir;
 
     use super::*;
 
