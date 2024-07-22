@@ -102,12 +102,11 @@ pub fn append_log(prog: &str, data: &str, mut errors: ErrorArray) -> uf<()> {
     let log_dir: PathType = PathType::Content(format!("{}{}", LOG_DIRECTORY, prog));
     let log_file: PathType = PathType::Content(format!("{}/general.log", log_dir.to_string()));
 
-    match remake_dir(&log_dir, errors.clone()).uf_unwrap() {
-        Ok(_) => (),
-        Err(e) => {
-            println!("file err");
-            return uf::new(Err(e))}
-            ,
+    if !log_dir.exists() {
+        match make_dir(&log_dir, errors.clone()).uf_unwrap() {
+            Ok(_) => (),
+            Err(e) => return uf::new(Err(e)),
+        }
     }
 
     let mut log_file = match OpenOptions::new()

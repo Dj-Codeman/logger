@@ -3,7 +3,7 @@ name = "simple_tmp_logger"
 version = "1.2.1"
 edition = "2021"
 authors = ["Darrion Whitfield <dwhitfield@ramfield.net>"]
-descriptions = "A really simple application to write files to a log in the /tmp dir"
+description = "A really simple application to write files to a log in the /tmp dir"
 homepage = "https://docs.artisanhosting.net"
 license = "MIT OR Apache-2.0"
 
