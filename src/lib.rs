@@ -1,12 +1,12 @@
 use chrono::{DateTime, Datelike, Local, Timelike};
 use dusa_collection_utils::errors::Errors;
-use std::{fs::OpenOptions, io::Write, str};
 #[allow(unused_imports, deprecated)]
 use dusa_collection_utils::{
     errors::{ErrorArray, ErrorArrayItem, UnifiedResult as uf},
     functions::{make_dir, open_file, remake_dir},
     types::PathType,
 };
+use std::{fs::OpenOptions, io::Write, str};
 
 const LOG_DIRECTORY: &str = "/tmp/";
 
@@ -94,7 +94,6 @@ pub fn start_log(prog: &str, mut errors: ErrorArray) -> uf<()> {
 
 pub fn append_log(prog: &str, data: &str, mut errors: ErrorArray) -> uf<()> {
     // This function takes a str and program names wraps the data in a timestamp them write it to the appropriate file
-    
 
     let log_msg: String = format!("{} @{} \n", data, timestamp());
 
@@ -102,35 +101,46 @@ pub fn append_log(prog: &str, data: &str, mut errors: ErrorArray) -> uf<()> {
     let log_dir: PathType = PathType::Content(format!("{}{}", LOG_DIRECTORY, prog));
     let log_file: PathType = PathType::Content(format!("{}/general.log", log_dir.to_string()));
 
-    if !log_dir.exists() {
-        match make_dir(&log_dir, errors.clone()).uf_unwrap() {
-            Ok(_) => (),
-            Err(e) => return uf::new(Err(e)),
-        }
+    if log_file.exists() {
+        let mut log_file = OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .append(true)
+            .open(log_file)
+            .unwrap();
+
+        return match writeln!(log_file, "{}", log_msg) {
+            Ok(_) => uf::new(Ok(())),
+            Err(e) => {
+                errors.push(ErrorArrayItem::from(e));
+                uf::new(Err(errors))
+            }
+        };
+    } else {
+        make_dir(&log_dir, errors.clone());
+
+        let mut log_file = match OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .append(true)
+            .open(log_file)
+        {
+            Ok(d) => d,
+            Err(e) => {
+                errors.push(ErrorArrayItem::from(e));
+                return uf::new(Err(errors));
+            }
+        };
+
+        return match writeln!(log_file, "{}", log_msg) {
+            Ok(_) => uf::new(Ok(())),
+            Err(e) => {
+                errors.push(ErrorArrayItem::from(e));
+                uf::new(Err(errors))
+            }
+        };
     }
 
-    let mut log_file = match OpenOptions::new()
-        .create_new(true)
-        .write(true)
-        .append(true)
-        .open(log_file)
-    {
-        Ok(d) => d,
-        Err(e) => {
-            errors.push(ErrorArrayItem::from(e));
-            return uf::new(Err(errors));
-        }
-    };
-
-    // TODO USE THE SYSTEM LIB MORE HEAVY add append to file function to standardize behavior
-    match writeln!(log_file, "{}", log_msg) {
-        Ok(_) => return uf::new(Ok(())),
-        Err(e) => {
-            println!("err writing");
-            errors.push(ErrorArrayItem::from(e));
-            return uf::new(Err(errors));
-        }
-    };
 }
 
 #[cfg(test)]
@@ -146,8 +156,8 @@ mod tests {
         let d = append_log("test", "Data", errors.clone());
         assert!(d.is_ok());
         // assert_eq!(
-            // path_present(&path, errors.clone()).unwrap(),
-            // true
+        // path_present(&path, errors.clone()).unwrap(),
+        // true
         // );
         // Cleaning up dir
         let _ = del_dir(&path, errors.clone());
